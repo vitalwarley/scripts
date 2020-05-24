@@ -72,11 +72,9 @@ def extract_info(nota):
             'hour': hour}
 
 
-def dataframe_from_notes(save=True, filename='clippings.csv', filter_by=None):
+def dataframe_from_notes(notes_file, save=True, filename='clippings.csv', filter_by=None):
 
     # TODO: check if already exists '.csv'
-
-    notes_file = 'My Clippings.txt'
 
     with open(notes_file, 'r', encoding='utf-8-sig') as f:
         lines = f.read()
@@ -100,27 +98,34 @@ def dataframe_from_notes(save=True, filename='clippings.csv', filter_by=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='retrieve notes from kindle')
     parser.add_argument('--list-authors', action='store_true')
-    parser.add_argument('--build-all', action='store_true')
     parser.add_argument('--build-only')
     parser.add_argument('--columns')
     parser.add_argument('--save')
+    parser.add_argument('--input')
     args = parser.parse_args()
 
+    if args.input is None:
+        print("Error: Need a input file!")
+        import sys
+        sys.exit()
+    else:
+        notes_file = args.input
+
     result = None
-    
+
     if args.list_authors:
-        notes = dataframe_from_notes(save=False)
+        notes = dataframe_from_notes(notes_file, save=False)
         print(notes.book.unique())
     elif args.build_only is not None:
         column, query = args.build_only.split('=')
-        notes = dataframe_from_notes(save=False)
+        notes = dataframe_from_notes(notes_file, save=False)
         if args.columns is not None:
             columns = args.columns.split(',')
             result = notes.query(f'{column} == "{query}"')[columns]
         else:
             result = notes.query(f'{column} == "{query}"')
-    elif args.build_all:
-        dataframe_from_notes()
+    else:
+        dataframe_from_notes(notes_file)
 
     if result is not None and args.save is not None:
         if args.save == 'json':

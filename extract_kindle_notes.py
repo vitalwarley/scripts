@@ -1,6 +1,19 @@
+import re
 import argparse
+from datetime import datetime
 import pandas as pd
 
+
+def convert_date(date):
+    months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+    months_dict = dict(zip(months, range(1, 13)))
+    day, month, year = date.split(' de ')
+    day = int(day)
+    month = months_dict[month]
+    year = int(year)
+    return datetime(year, month, day)
+    
 
 def extract_info(nota):
     """
@@ -61,7 +74,13 @@ def extract_info(nota):
         position = text_type_position[1].split(' ')[1]
     date_hour = date_hour.split(', ')[1]
     date = date_hour[:-9]
+    date = convert_date(date)
     hour = date_hour[-8:]
+
+    if page is None:
+        page = 0
+
+    page = int(page)
 
     return {'book': book_author,
             'text': text,
@@ -73,6 +92,7 @@ def extract_info(nota):
 
 
 def dataframe_from_notes(notes_file, save=True, filename='clippings.csv', filter_by=None):
+    """Convert kindle clippings to dataframe."""
 
     # TODO: check if already exists '.csv'
 
@@ -95,13 +115,44 @@ def dataframe_from_notes(notes_file, save=True, filename='clippings.csv', filter
         return notes_df
 
 
+def parse_filter_options(options):
+    # split columns
+    # TODO: improve regex manipulation; this way column keys can be a substring in column values
+    columns = ['book', 'text', 'type', 'page', 'position', 'date', 'hour']
+    regex = ("({})|" * len(columns)).format(*columns)[:-1] 
+    regex = '(' + '|'.join(columns) + ')'
+    regex = re.compile(regex)
+    split = re.split(regex, options)[1:]
+    keys = split[::2]
+    # split op and value
+    regex = re.compile('(=|>|<)')
+    ops_values = split[1::2]
+    ops_values = [re.split(regex, ov)[1:] for ov in ops_values] 
+    # make dict
+    options = {}
+    for key, ov in zip(keys, ops_values):
+        # op can be [op, '', op, value] or [op, value]
+        op = ov[:-1]
+        if len(op) > 1:
+            op = op[0] + op[2]
+        else:
+            op = op[0]
+        value = ov[-1]
+        if value[-1] == ',': value = value[:-1]
+        options[key] = dict(op=op, value=value)
+
+    return options
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='retrieve notes from kindle')
     parser.add_argument('--list-authors', action='store_true')
-    parser.add_argument('--build-only')
     parser.add_argument('--columns')
     parser.add_argument('--save')
     parser.add_argument('--input')
+    parser.add_argument('--output')
+    parser.add_argument('--filter', help="filter data (i.e. date='2020-05-25'). you can add more filters with ','")
+    parser.add_argument('--sort-by')
     args = parser.parse_args()
 
     if args.input is None:
@@ -111,27 +162,48 @@ if __name__ == '__main__':
     else:
         notes_file = args.input
 
+    if args.output is None:
+        output = 'result'
+    else:
+        output = args.output
+
     result = None
 
     if args.list_authors:
         notes = dataframe_from_notes(notes_file, save=False)
         print(notes.book.unique())
-    elif args.build_only is not None:
-        column, query = args.build_only.split('=')
-        notes = dataframe_from_notes(notes_file, save=False)
+    elif any([args.sort_by, args.filter, args.columns]):
+        result = dataframe_from_notes(notes_file, save=False)
+
+        if args.sort_by is not None: 
+            col = args.sort_by
+            result = result.iloc[eval(f'result.{col}.sort_values().index')]
+
+        if args.filter is not None:
+            # now a dict
+            # for example: book='Atomic Habits (Clear, James)',date='2020-05-25'
+            # { book: { op: '=', value: 'Atomic Habits (Clear, James)' },
+            #   date: { op: '=', value: '2020-05-25' }}
+            options = parse_filter_options(args.filter)
+            for key in options:
+                value = options[key]['value']
+                op = options[key]['op']
+                if op not in ['<', '<=', '>', '>=', '=']:
+                    raise ValueError('Incorrect filter operation!')
+                if op == '=': op += '='
+                result = result.query(f'{key} {op} "{value}"')
+
         if args.columns is not None:
             columns = args.columns.split(',')
-            result = notes.query(f'{column} == "{query}"')[columns]
-        else:
-            result = notes.query(f'{column} == "{query}"')
+            result = result[columns]
     else:
         dataframe_from_notes(notes_file)
 
     if result is not None and args.save is not None:
         if args.save == 'json':
-            result.to_json('result.json', orient='records', force_ascii=False)
+            result.to_json(f'{output}.json', orient='records', force_ascii=False)
         if args.save == 'csv':
-            result.to_csv('result.csv')
+            result.to_csv(f'{output}.csv')
     elif result is not None:
         print(result)
 

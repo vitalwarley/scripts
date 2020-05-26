@@ -171,7 +171,8 @@ if __name__ == '__main__':
 
     if args.list_authors:
         notes = dataframe_from_notes(notes_file, save=False)
-        print(notes.book.unique())
+        # result = notes.book.unique()
+        result = notes.groupby('book').size().to_json(force_ascii=False)
     elif any([args.sort_by, args.filter, args.columns]):
         result = dataframe_from_notes(notes_file, save=False)
 
@@ -205,6 +206,8 @@ if __name__ == '__main__':
         if args.save == 'csv':
             result.to_csv(f'{output}.csv')
     elif result is not None:
-        print(result)
-
+        import json
+        result = json.loads(result)
+        for book in result:
+            print('Total notes: {:5} \t Book: {}'.format(result[book], book))
 

@@ -2,8 +2,8 @@ import os
 import argparse
 import re
 from datetime import datetime
-from hypothesis import Hypothesis as H
-from hypothesis import HypothesisAnnotation
+from Hypothesis import Hypothesis as H
+from Hypothesis import HypothesisAnnotation
 from dotenv import load_dotenv
 
 parser = argparse.ArgumentParser()
@@ -39,6 +39,7 @@ if groupid is not None:
 #    'text': a['target'][0]['selector'][0]['selector'][1]['exact']
 #    } for a in annotations]
 annotations = [HypothesisAnnotation(row) for row in annotations]
+annotations = sorted(annotations, key=lambda x: x.start)
 
 def clean_text(text):
     # spaces
@@ -46,7 +47,12 @@ def clean_text(text):
     # punctuation?
     return text
 
-for a in annotations:
-    print(clean_text(a.exact))
-    print()
 
+def main():
+    for a in annotations:
+        print(a.start, clean_text(a.exact))
+        print()
+
+
+if __name__ == '__main__':
+    main()

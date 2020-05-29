@@ -1,0 +1,3 @@
+[submodule "hypothesis/Hypothesis"]
+	path = hypothesis/Hypothesis
+	url = https://github.com/vitalwarley/Hypothesis

@@ -28,10 +28,9 @@ def connect_to_hypothesis():
     return h
 
 
-def debug():
-    # DEBUG
+class debug:
+    group_id = 'wdkVg8VA'
     today = False
-    groupid = 'wdkVg8VA'
     date = '29-05-2020'
 
 
@@ -90,7 +89,7 @@ def preprocess(annotations):
         if annotation.type == 'annotation':
             annotation.exact = clean(annotation.exact)
             
-    annotations = sorted(annotations, key=lambda a: a.start)
+    return sorted(annotations, key=lambda a: a.start)
 
 
 # TODO: how to extract references like (Author et al. 2020)?
@@ -100,7 +99,7 @@ def main():
 
     args = parse_input()
     annotations = extract(args)
-    preprocess(annotations)
+    annotations = preprocess(annotations)
 
     output = ''
     for a in annotations:

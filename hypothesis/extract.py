@@ -81,7 +81,8 @@ def preprocess(annotations):
     def clean(text):
         # spaces
         text = re.sub(' +', ' ', text.strip())
-        # punctuation?
+        # punctuation 
+        text = text.replace('”', '"').replace('“', '"').replace("’", "'")
         return text
 
     for annotation in annotations:

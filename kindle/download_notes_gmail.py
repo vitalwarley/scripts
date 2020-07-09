@@ -1,3 +1,15 @@
+"""
+This script was necessary for me because Amazon limits the total of highlights 
+you can export both in the My Clippings.txt and in the https://read.amazon.com/notebook.
+
+This way, it seems that I can retrieve all of my notes. 
+
+Status: working as of 08/06/2020.
+
+Author:
+    Warley Vital Barbosa
+    vitalwarley@gmail.com
+"""
 import base64
 import pickle
 import os.path

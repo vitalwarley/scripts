@@ -52,10 +52,16 @@ for message in results['messages']:
         if part['filename']:
             mimetype = part['mimeType']
             if mimetype == 'text/csv':
+                # TODO: choose one instead of asking to save for each one.
+                # TODO: show date.
+                save = input("Save the file '{}'? (Y/n) ".format(part['filename']))
+                if save == 'n':
+                    continue
                 filename = part['filename']
                 att_id = part['body']['attachmentId']
                 attach_part = messages_resource.attachments().get(id=att_id, userId='me', messageId=msg_id).execute()
                 file_data = base64.urlsafe_b64decode(attach_part['data'].encode('UTF-8'))
-                path = ''.join([store_dir, part['filename']])
+                filename = input('Filename: ')
+                path = ''.join([store_dir, filename])
                 with open(path, 'wb') as f:
                     f.write(file_data)

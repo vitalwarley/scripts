@@ -43,25 +43,31 @@ service = build('gmail', 'v1', credentials=creds)
 messages_resource = service.users().messages()
 
 results = messages_resource.list(userId='me', q='Notas e destaques criados em seu Kindle').execute()
-store_dir = ''
+store_dir = 'notes/'
 
-for message in results['messages']:
-    msg_id = message['id']
-    message = service.users().messages().get(userId='me', id=msg_id).execute()
-    for part in message['payload']['parts']:
-        if part['filename']:
-            mimetype = part['mimeType']
-            if mimetype == 'text/csv':
-                # TODO: choose one instead of asking to save for each one.
-                # TODO: show date.
-                save = input("Save the file '{}'? (Y/n) ".format(part['filename']))
-                if save == 'n':
-                    continue
-                filename = part['filename']
-                att_id = part['body']['attachmentId']
-                attach_part = messages_resource.attachments().get(id=att_id, userId='me', messageId=msg_id).execute()
-                file_data = base64.urlsafe_b64decode(attach_part['data'].encode('UTF-8'))
-                filename = input('Filename: ')
-                path = ''.join([store_dir, filename])
-                with open(path, 'wb') as f:
-                    f.write(file_data)
+messages = [service.users().messages().get(userId='me', id=message['id']).execute() for message in results['messages']]
+
+for idx_i, message in enumerate(messages):
+    filenames = [part['filename'] for part in message['payload']['parts']]
+    for idx_j, fn in enumerate(filenames):
+        if not idx_j:
+            print()
+            continue
+        print(f"{idx_i}.{idx_j}: {fn}")
+
+idx = input('\nType desired file id: ')
+i, j = [int(_) for _ in idx.split('.')]
+
+part = messages[i]['payload']['parts'][j]
+filename = part['filename']
+msg_id = messages[i]['id']
+att_id = part['body']['attachmentId']
+attach_part = messages_resource.attachments().get(id=att_id, userId='me', messageId=msg_id).execute()
+file_data = base64.urlsafe_b64decode(attach_part['data'].encode('UTF-8'))
+
+filename = input('Filename: ')
+path = ''.join([store_dir, filename])
+with open(path, 'wb') as f:
+    f.write(file_data)
+
+print("Saved: {path}")

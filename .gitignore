@@ -2,3 +2,9 @@
 .punctuator
 .env
 test.py
+notes/
+clips/
+credentials.json
+token.pickle
+tools/
+data/

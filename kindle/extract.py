@@ -1,7 +1,9 @@
+import os
 import re
 import argparse
-from datetime import datetime
+import subprocess
 import pandas as pd
+from datetime import datetime
 
 
 def convert_date(date):
@@ -91,15 +93,12 @@ def extract_info(nota):
             'hour': hour}
 
 
-def dataframe_from_notes(notes_file, save=True, filename='clippings.csv', filter_by=None):
+def dataframe_from_notes(notes, save=True, filename='clippings.csv', filter_by=None):
     """Convert kindle clippings to dataframe."""
 
     # TODO: check if already exists '.csv'
 
-    with open(notes_file, 'r', encoding='utf-8-sig') as f:
-        lines = f.read()
-
-    notes = lines.split('=' * 10 + '\n')[:-1]  # discard last empty
+    notes = notes.split('=' * 10 + '\n')[:-1]  # discard last empty
 
     notes_df = pd.DataFrame([], columns=['book', 'text', 'type', 'page', 'position', 'date', 'hour'])
     for i, note in enumerate(notes):
@@ -143,6 +142,30 @@ def parse_filter_options(options):
 
     return options
 
+def read_clippings(path):
+    with open(path, 'r', encoding='utf-8-sig') as f:
+        lines = f.read()
+    return lines
+
+
+def read_from_kindle():
+    # If it already is mounted
+    clippings_path = '/media/lativ/Kindle/documents/My Clippings.txt'
+    if os.path.exists(clippings_path):
+        notes = read_clippings(clippings_path)
+    else:
+        # This works because I have the following in my fstab:
+        #   UUID=5D4A-D6F8 /media/lativ/Kindle auto user,umask=000,utf8,ro,noauto 0 0
+        ret_code, _ = subprocess.getstatusoutput('mount -L Kindle')
+        if ret_code:
+            print("Error: can't read My Clippings.txt from Kindle. Probably it is not connected!")
+            # TODO: raise exception?
+            import sys
+            sys.exit()
+
+        notes = read_clippings(clippings_path)
+    return notes
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='retrieve notes from kindle')
@@ -156,11 +179,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.input is None:
-        print("Error: Need a input file!")
-        import sys
-        sys.exit()
+        print('No input file given. Trying to read directly from kindle...')
+        notes = read_from_kindle()
     else:
-        notes_file = args.input
+        notes = read_clippings(args.input)
 
     if args.output is None:
         output = 'result'
@@ -170,11 +192,11 @@ if __name__ == '__main__':
     result = None
 
     if args.list_authors:
-        notes = dataframe_from_notes(notes_file, save=False)
+        notes = dataframe_from_notes(notes, save=False)
         # result = notes.book.unique()
         result = notes.groupby('book').size().to_json(force_ascii=False)
     elif any([args.sort_by, args.filter, args.columns]):
-        result = dataframe_from_notes(notes_file, save=False)
+        result = dataframe_from_notes(notes, save=False)
 
         if args.sort_by is not None: 
             col = args.sort_by
@@ -198,7 +220,7 @@ if __name__ == '__main__':
             columns = args.columns.split(',')
             result = result[columns]
     else:
-        dataframe_from_notes(notes_file)
+        print(dataframe_from_notes(notes))
 
     if result is not None and args.save is not None:
         if args.save == 'json':

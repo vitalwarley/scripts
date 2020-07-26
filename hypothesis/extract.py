@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from Hypothesis import Hypothesis as H
 from Hypothesis import HypothesisAnnotation
 
+
 h = None
 
 
@@ -102,15 +103,24 @@ def main():
     annotations = extract(args)
     annotations = preprocess(annotations)
 
-    output = ''
+    # Order by doc_title
+    doc_titles = set([annot.doc_title for annot in annotations])
+    annotations_by_title = {doc:[] for doc in doc_titles}
     for a in annotations:
-        if a.type == 'reply' or a.is_page_note:
-            output += f' - {a.text}\n'
-        else:
-            output += f'- {a.exact}\n'
+        annotations_by_title[a.doc_title].append(a)
+
+    output = ''
+    for doc in annotations_by_title.keys():
+        output += f'- {doc} #literature-note\n'
+        for a in annotations_by_title[doc]:
+            if a.type == 'reply' or a.is_page_note:
+                output += f'\t- {a.text}\n'
+            else:
+                output += f'\t- {a.exact}\n'
 
     pyperclip.copy(output)
     print('Done! Notes in the clipboard.')
+
 
 if __name__ == '__main__':
     main()

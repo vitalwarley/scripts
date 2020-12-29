@@ -2,7 +2,7 @@
 
 1. Create a virtual environment.
 2. Install packages: `pip -r requeriments.txt`
-3. Download model:
+3. Download `Demo-Europarl-EN.pcl` model:
 ```
 mkdir -p ~/.punctuator
 cd ~/.punctuator

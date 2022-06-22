@@ -5,7 +5,7 @@ filelock==3.0.12
 gdown==3.12.2
 idna==2.10
 joblib==1.0.0
-nltk==3.5
+nltk==3.6.6
 numpy==1.22.0
 punctuator==0.9.6
 pyperclip==1.8.1

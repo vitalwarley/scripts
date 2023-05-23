@@ -11,7 +11,7 @@ punctuator==0.9.6
 pyperclip==1.8.1
 PySocks==1.7.1
 regex==2020.11.13
-requests==2.25.1
+requests==2.31.0
 scipy==1.5.4
 six==1.15.0
 Theano==1.0.5

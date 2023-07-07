@@ -12,7 +12,7 @@ pyperclip==1.8.1
 PySocks==1.7.1
 regex==2020.11.13
 requests==2.31.0
-scipy==1.5.4
+scipy==1.10.0
 six==1.15.0
 Theano==1.0.5
 tqdm==4.55.0

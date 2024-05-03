@@ -15,6 +15,6 @@ requests==2.31.0
 scipy==1.10.0
 six==1.15.0
 Theano==1.0.5
-tqdm==4.55.0
+tqdm==4.66.3
 urllib3==1.26.18
 youtube-transcript-api==0.3.1
